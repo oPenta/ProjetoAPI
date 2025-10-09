@@ -1,85 +1,117 @@
+Compilação e Execução
 Compilar o arquivo TypeScript:
+
 npx tsc
+
 npm run build
 
-Execultar arquivo gerado com node.js:
+Executar arquivo gerado com node.js:
+
 node dist/index.js
 
-Para execultar com o watch:
+Executar com o watch (modo de desenvolvimento):
+
 npm run start:watch
 
-Criar as tabelas do Banco de dados com migrations
+Criar as tabelas do Banco de Dados com migrations:
+
 npx typeorm migration:run -d dist/data-source.js
 
-Execultar as seeds
+Executar as seeds (popular o banco):
+
 node dist/run-seeds.js
 
+COMO RODAR O PROJETO
+Instale as dependências:
 
-
-
-COMO RODAR:
 npm install
-copy .env.example .env  =====//COLOCAR SUAS INFORMAÇÕES DO POSTGRES\\=====
+
+Crie o arquivo .env e adicione suas informações do PostgreSQL:
+
+copy .env.example .env
+
+Compile o projeto:
+
 npm run build ou npx tsc
+
+Rode as migrations para criar as tabelas:
+
 npx typeorm migration:run -d dist/data-source.js
+
+(Opcional) Rode os seeds para popular o banco:
+
 node dist/run-seeds.js
-npm run start:watch   
 
+Inicie o servidor em modo de desenvolvimento:
 
+npm run start:watch
 
+TESTES COM POSTMAN
+Variável de Ambiente: Crie uma variável {{host}} com o valor http://localhost:8080.
 
+CREATE (POST)
+Endpoint: {{host}}/product-categories
 
-{{host}} tem que criar o variable para http://localhost:8080
+Body:
 
-POSTMAN CREATE:
-{{host}}/product-categories
 {
     "name": "Livros e Papelaria"
 }
 
-{{host}}/product-situations
+Endpoint: {{host}}/product-situations
+
+Body:
+
 {
     "name": "Sob Encomenda"
 }
 
-{{host}}/products
+Endpoint: {{host}}/products
+
+Body:
+
 {
     "name": "Caderno Universitário",
     "productCategoryId": 3,
     "productSituationId": 3
 }
 
-
-POSTMAN LIST:
+LIST (GET)
 {{host}}/product-categories?page=1&limit=5
 {{host}}/product-situations?page=1&limit=5
 {{host}}/products?page=1&limit=5
 
-
-POSTMAN VIEW
+VIEW (GET)
 {{host}}/product-categories/1
 {{host}}/product-situations/1
 {{host}}/products/1
 
+EDIT (PUT)
+Endpoint: {{host}}/product-categories/1
 
-POSTMAN EDIT
-{{host}}/product-categories/1
+Body:
+
 {
     "name": "Livros, Revistas e Papelaria"
 }
 
-{{host}}/product-situations/1
+Endpoint: {{host}}/product-situations/1
+
+Body:
+
 {
     "name": "Caderno Universitário Capa Dura"
 }
 
-{{host}}/products/1
+Endpoint: {{host}}/products/1
+
+Body:
+
 {
     "name": "Pc gamer"
 }
 
-
-POSTMAN DELETE
+DELETE (DELETE)
 {{host}}/product-categories/1
 {{host}}/product-situations/1
 {{host}}/products/1

@@ -15,13 +15,16 @@ export default class CreateProductCategoriesSeeds {
 
         const categories = [
             { name: "Eletrônicos" },
-            { name: "Vestuário" },
+            { name: "Computadores e Informática" },
+            { name: "Smartphones" },
+            { name: "Games" },
             { name: "Livros" },
             { name: "Casa e Cozinha" },
+            { name: "Vestuário" }
         ];
 
         await repository.save(categories);
 
-        console.log("Seed concluído com sucesso: categorias de produto cadastradas.");
+        console.log("Seed concluído: categorias de produto cadastradas.");
     }
 }

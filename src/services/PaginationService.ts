@@ -1,47 +1,39 @@
 import type { FindOptionsOrder, ObjectLiteral, Repository } from "typeorm";
 
-
-interface PaginationResult<T>{
+interface PaginationResult<T> {
     error: boolean;
-    data:T[];
-    currentPage: number,
-    lastPage: number,
-    totalRecords: number,
-
+    data: T[];
+    currentPage: number;
+    lastPage: number;
+    totalRecords: number;
 }
 
-export class PaginationService{
+export class PaginationService {
     static async paginate<T extends ObjectLiteral>(
-        repository:Repository<T>,
+        repository: Repository<T>,
         page: number = 1,
         limit: number = 10,
-        order: FindOptionsOrder<T> = {}
-
-    ):Promise<PaginationResult<T>>{
+        order: FindOptionsOrder<T> = {},
+        relations: string[] = [] 
+    ): Promise<PaginationResult<T>> {
+        
         const totalRecords = await repository.count();
-        const lastPage = Math.ceil(totalRecords/limit);
+        const lastPage = Math.ceil(totalRecords / limit);
         const offset = (page - 1) * limit;
+
         const data = await repository.find({
             take: limit,
             skip: offset,
             order,
-        })
+            relations: relations 
+        });
 
-        if(page > lastPage && lastPage > 0){
-
-            throw new Error(`Pagina invalida. Total de paginas: ${lastPage}`)
-        
-        }
-        
-        return{
+        return {
             error: false,
             data,
             currentPage: page,
-            lastPage,
+            lastPage: lastPage === 0 ? 1 : lastPage,
             totalRecords
-        }
-
-
+        };
     }
-
 }

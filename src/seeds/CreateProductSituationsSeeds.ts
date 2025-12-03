@@ -14,14 +14,15 @@ export default class CreateProductSituationsSeeds {
         }
 
         const situations = [
-            { name: "Disponível" },
-            { name: "Esgotado" },
-            { name: "Pré-venda" },
-            { name: "Fora de linha" },
+            { name: "Disponível" },      
+            { name: "Esgotado" },        
+            { name: "Pré-venda" },       
+            { name: "Sob Encomenda" },   
+            { name: "Descontinuado" }    
         ];
 
         await repository.save(situations);
 
-        console.log("Seed concluído com sucesso: situações de produto cadastradas.");
+        console.log("Seed concluído: situações de produto cadastradas.");
     }
 }

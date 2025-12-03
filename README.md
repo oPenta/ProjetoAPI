@@ -1,48 +1,17 @@
-# Projeto Node.js com TypeORM
+# API Node.js com TypeORM e PostgreSQL
 
-Guia completo de instalação, configuração e execução do projeto.
+Esta é uma API RESTful robusta desenvolvida para gerenciamento de usuários e produtos, contando com autenticação segura, controle de acesso e recuperação de senha.
 
----
+## Tecnologias Utilizadas
 
-## Compilação e Execução
+-   **Node.js** e **Express**
+-   **TypeScript**
+-   **TypeORM** (PostgreSQL)
+-   **JWT** (Autenticação)
+-   **Bcrypt** (Criptografia de senhas)
+-   **Nodemailer** (Envio de e-mails)
+-   **Yup** (Validação de dados)
 
-### Compilar o arquivo TypeScript
-
-```bash
-npx tsc
-```
-
-ou
-
-```bash
-npm run build
-```
-
-### Executar o arquivo gerado com Node.js
-
-```bash
-node dist/index.js
-```
-
-### Executar em modo de desenvolvimento (watch)
-
-```bash
-npm run start:watch
-```
-
-### Criar as tabelas do Banco de Dados com migrations
-
-```bash
-npx typeorm migration:run -d dist/data-source.js
-```
-
-### Executar as seeds (popular o banco)
-
-```bash
-node dist/run-seeds.js
-```
-
----
 
 ## COMO RODAR O PROJETO
 
@@ -54,20 +23,10 @@ npm install
 
 ### 2-Criar o arquivo `.env` e adicionar suas informações do PostgreSQL
 
-```bash
-copy .env.example .env
-```
-
 ### 3-Compilar o projeto
 
 ```bash
 npm run build
-```
-
-ou
-
-```bash
-npx tsc
 ```
 
 ### 4-Rodar as migrations para criar as tabelas
@@ -87,117 +46,3 @@ node dist/run-seeds.js
 ```bash
 npm run start:watch
 ```
-
----
-
-## TESTES COM POSTMAN
-
-### Variável de Ambiente
-
-Crie uma variável `{{host}}` com o valor:
-
-```
-http://localhost:8080
-```
-
----
-
-### ➕ CREATE (POST)
-
-#### Endpoint: `{{host}}/product-categories`
-
-**Body:**
-
-```json
-{
-    "name": "Livros e Papelaria"
-}
-```
-
-#### Endpoint: `{{host}}/product-situations`
-
-**Body:**
-
-```json
-{
-    "name": "Sob Encomenda"
-}
-```
-
-#### Endpoint: `{{host}}/products`
-
-**Body:**
-
-```json
-{
-    "name": "Caderno Universitário",
-    "productCategoryId": 3,
-    "productSituationId": 3
-}
-```
-
----
-
-### 📋 LIST (GET)
-
-```
-{{host}}/product-categories?page=1&limit=5
-{{host}}/product-situations?page=1&limit=5
-{{host}}/products?page=1&limit=5
-```
-
----
-
-### 🔍 VIEW (GET)
-
-```
-{{host}}/product-categories/1
-{{host}}/product-situations/1
-{{host}}/products/1
-```
-
----
-
-### ✏️ EDIT (PUT)
-
-#### Endpoint: `{{host}}/product-categories/1`
-
-**Body:**
-
-```json
-{
-    "name": "Livros, Revistas e Papelaria"
-}
-```
-
-#### Endpoint: `{{host}}/product-situations/1`
-
-**Body:**
-
-```json
-{
-    "name": "Caderno Universitário Capa Dura"
-}
-```
-
-#### Endpoint: `{{host}}/products/1`
-
-**Body:**
-
-```json
-{
-    "name": "Pc gamer"
-}
-```
-
----
-
-### ❌ DELETE (DELETE)
-
-```
-{{host}}/product-categories/1
-{{host}}/product-situations/1
-{{host}}/products/1
-```
-
----

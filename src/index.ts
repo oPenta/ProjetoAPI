@@ -2,9 +2,10 @@ import "reflect-metadata";
 import express from 'express';
 import dotenv from "dotenv";
 import { AppDataSource } from './data-source.js';
+import cors from 'cors';
 
-// Importação de TODOS os controllers
 import AuthController from './controllers/AuthController.js';
+import UsersController from './controllers/UsersController.js'; 
 import SituationsController from './controllers/SituationsController.js';
 import ProductCategoriesController from './controllers/ProductCategoriesController.js';
 import ProductSituationsController from './controllers/ProductSituationsController.js';
@@ -20,7 +21,10 @@ AppDataSource.initialize()
 
         app.use(express.json());
 
+        app.use(cors());
+
         app.use(AuthController);
+        app.use(UsersController); 
         app.use(SituationsController);
         app.use(ProductCategoriesController); 
         app.use(ProductSituationsController); 
@@ -33,6 +37,5 @@ AppDataSource.initialize()
 
     })
     .catch((error) => {
-        // Corrigido para mostrar o erro real da conexão
         console.error("Erro durante a inicialização da conexão com o banco de dados:", error);
     });

@@ -3,30 +3,34 @@ import type { Request, Response } from 'express';
 import { AppDataSource } from '../data-source.js';
 import { Products } from '../entity/Products.js';
 import { PaginationService } from '../services/PaginationService.js';
+import * as yup from 'yup';
+import { Not } from 'typeorm';
+import { default as slugify } from 'slugify';
+import { verifyToken } from '../middlewares/AuthMiddleware.js';
 
 const router = express.Router();
 
-// Listar
-router.get("/products", async (req: Request, res: Response) => {
+// LISTAR (Com Relações)
+router.get("/products", verifyToken, async (req: Request, res: Response) => {
     try {
         const repository = AppDataSource.getRepository(Products);
         const page = Number(req.query.page) || 1;
         const limit = Number(req.query.limit) || 10;
-        const result = await PaginationService.paginate(repository, page, limit, { id: "ASC" });
         
-        return res.status(200).json({
-            result
-        });
-    } catch (error) {
-        console.error("Erro ao listar produtos:", error);
-        return res.status(500).json({ 
-            mensagem: "Erro ao listar os produtos." 
-        });
-    }
+        // Passamos as duas tabelas relacionadas
+        const result = await PaginationService.paginate(
+            repository, 
+            page, 
+            limit, 
+            { id: "ASC" },
+            ["productCategory", "productSituation"] 
+        );
+        return res.status(200).json({ result });
+    } catch (error) { return res.status(500).json({ mensagem: "Erro interno ao listar." }); }
 });
 
-// Visualizar
-router.get("/products/:id", async (req: Request, res: Response) => {
+// VISUALIZAR
+router.get("/products/:id", verifyToken, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const repository = AppDataSource.getRepository(Products);
@@ -34,110 +38,78 @@ router.get("/products/:id", async (req: Request, res: Response) => {
             where: { id: parseInt(id) },
             relations: ["productCategory", "productSituation"]
         });
-
-        if (!product) {
-            res.status(404).json({
-                mensagem: "Produto não encontrado." 
-            });
-            return;
-        }
-        
-        res.status(200).json({ data: product });
-        return;
-
-    } catch (error) {
-        console.error("Erro ao visualizar produto:", error);
-        res.status(500).json({
-            mensagem: "Erro ao visualizar o produto." 
-        });
-        return;
-    }
+        if (!product) return res.status(404).json({ mensagem: "Produto não encontrado." });
+        return res.status(200).json({ data: product });
+    } catch (error) { return res.status(500).json({ mensagem: "Erro interno ao visualizar." }); }
 });
 
-// Atualizar
-router.put("/products/:id", async (req: Request, res: Response) => {
+// ATUALIZAR
+router.put("/products/:id", verifyToken, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const data = req.body;
+        const schema = yup.object().shape({
+            name: yup.string().trim().required().min(4), description: yup.string().trim().nullable(),
+            price: yup.number().min(0).nullable(), productCategoryId: yup.number().required(), productSituationId: yup.number().required()
+        });
+        await schema.validate(data, { abortEarly: false });
+
         const repository = AppDataSource.getRepository(Products);
         const product = await repository.findOneBy({ id: parseInt(id) });
+        if (!product) return res.status(404).json({ mensagem: "Produto não encontrado." });
 
-        if (!product) {
-            res.status(404).json({
-                mensagem: "Produto não encontrado." 
-            });
-            return;
+        if (data.name !== product.name) {
+            const exists = await repository.findOne({ where: { name: data.name } });
+            if (exists) return res.status(400).json({ mensagem: "Erro: Nome já existe." });
+            data.slug = (slugify as any)(data.name, { lower: true });
         }
 
         repository.merge(product, data);
-        const updatedProduct = await repository.save(product);
-
-        res.status(201).json({
-            mensagem: "Produto atualizado com sucesso.",
-            product: updatedProduct,
-        });
-
+        await repository.save(product);
+        return res.status(200).json({ mensagem: "Produto atualizado com sucesso.", product });
     } catch (error) {
-        console.error("Erro ao editar produto:", error);
-        res.status(500).json({
-            mensagem: "Erro ao editar o produto." 
-        });
-        return;
+        if (error instanceof yup.ValidationError) return res.status(400).json({ mensagem: "Erro validação", erros: error.inner });
+        return res.status(500).json({ mensagem: "Erro interno." });
     }
 });
 
-// Deletar
-router.delete("/products/:id", async (req: Request, res: Response) => {
+// REMOVER
+router.delete("/products/:id", verifyToken, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const repository = AppDataSource.getRepository(Products);
         const product = await repository.findOneBy({ id: parseInt(id) });
-
-        if (!product) {
-            res.status(404).json({
-                mensagem: "Produto não encontrado." 
-            });
-            return;
-        }
-
+        if (!product) return res.status(404).json({ mensagem: "Produto não encontrado." });
         await repository.remove(product);
-
-        res.status(200).json({
-            mensagem: "Produto removido com sucesso.",
-        });
-
-    } catch (error) {
-        console.error("Erro ao remover produto:", error);
-        res.status(500).json({
-            mensagem: "Erro ao remover o produto." 
-        });
-        return;
-    }
+        return res.status(200).json({ mensagem: "Produto removido com sucesso." });
+    } catch (error) { return res.status(500).json({ mensagem: "Erro interno." }); }
 });
 
-// Cadastrar
-router.post("/products", async (req: Request, res: Response) => {
+// CADASTRAR
+router.post("/products", verifyToken, async (req: Request, res: Response) => {
     try {
-        const { name, productCategoryId, productSituationId } = req.body;
-        
-        if (!name || !productCategoryId || !productSituationId) {
-            return res.status(400).json({ mensagem: "Os campos 'name', 'productCategoryId' e 'productSituationId' são obrigatórios." });
-        }
+        const data = req.body;
+        const schema = yup.object().shape({
+            name: yup.string().trim().required().min(4), description: yup.string().trim().nullable(),
+            price: yup.number().min(0).nullable(), productCategoryId: yup.number().required(), productSituationId: yup.number().required()
+        });
+        await schema.validate(data, { abortEarly: false });
 
         const repository = AppDataSource.getRepository(Products);
-        const newProduct = repository.create({ name, productCategoryId, productSituationId });
+        const exists = await repository.findOneBy({ name: data.name });
+        if (exists) return res.status(400).json({ mensagem: "Erro: Nome já existe." });
+
+        const slugGerado = (slugify as any)(data.name, { lower: true });
+        const newProduct = repository.create({ 
+            name: data.name, slug: slugGerado, description: data.description, price: data.price, 
+            productCategoryId: data.productCategoryId, productSituationId: data.productSituationId 
+        });
+        
         await repository.save(newProduct);
-
-        return res.status(201).json({
-            mensagem: "Produto cadastrado com sucesso",
-            product: newProduct,
-        });
-
-    } catch(error) {
-        console.error("Erro ao cadastrar produto:", error);
-        return res.status(500).json({
-            mensagem: "Erro interno ao cadastrar o produto.",
-        });
+        return res.status(201).json({ mensagem: "Produto cadastrado com sucesso", product: newProduct });
+    } catch (error) {
+        if (error instanceof yup.ValidationError) return res.status(400).json({ mensagem: "Erro validação", erros: error.inner });
+        return res.status(500).json({ mensagem: "Erro interno." });
     }
 });
 
